@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-1
+  labels:
+    app: example-2
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+  selector:
+    matchLabels:
+      app: example-1
+  template:
+    metadata:
+      labels:
+        app: example-1
+      annotations:
+        imageregistry: "https://hub.docker.com/"
+    spec:
+      containers:
+        - name: example-1
+          image: gcr.io/example-1/example-1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_LEVEL
+              value: INFO
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 8080
+              name: httpn
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+        - name: example-2
+          image: gcr.io/example-1/example-1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_LEVEL
+              value: INFO
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-2
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: http-1
+      port: 8080
+      targetPort: 8081
+      protocol: TCP
+  selector:
+    app: example-2
